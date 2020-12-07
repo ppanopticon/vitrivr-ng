@@ -9,7 +9,7 @@
   "competition": {
     "teamid": 9,
     "toolid": 1,
-    "endpoint": "https://dmi-dres.dmi.unibas.ch:8443/",
+    "endpoint": "https://dmi-dres.dmi.unibas.ch:8443",
     "log": true,
     "lsc": false,
     "vbs": true,

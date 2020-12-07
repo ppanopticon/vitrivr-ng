@@ -14,6 +14,7 @@ import {EvaluationModule} from './evaluation/evaluation.module';
 import {MaterialModule} from './material.module';
 import {ResultsModule} from './results/results.module';
 import {MatBadgeModule} from '@angular/material/badge';
+import { GoogleChartsModule } from 'angular-google-charts';
 
 
 @NgModule({
@@ -29,7 +30,8 @@ import {MatBadgeModule} from '@angular/material/badge';
     ObjectdetailsModule,
     SettingsModule,
     QuerySidebarModule,
-    MatBadgeModule
+    MatBadgeModule,
+    GoogleChartsModule.forRoot({ version: '49' })
   ],
   declarations: [AppComponent, PingComponent],
   providers: [],

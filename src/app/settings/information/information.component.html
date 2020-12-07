@@ -1,0 +1,114 @@
+<h3>Information on result set</h3>
+
+<mat-list *ngIf="queryService.results" dense>
+  <h3 class="mat-list-custom" >
+    <b>{{queryService.results.segmentCount}}</b> segments in result set</h3>
+
+  <mat-form-field appearance="legacy" (submit)="changeNumberOfTagsShown()" *ngIf="tagOccurrence">
+    <mat-label>Number of related tags to show:</mat-label>
+    <input matInput placeholder="" [(ngModel)]="numberOfRelatedTagsShown">
+  </mat-form-field>
+
+  <h3 class="mat-list-custom" *ngIf="tagOccurrence">Top {{numberOfRelatedTagsShown}} of
+    <b>{{tagOccurrence.length}}</b>
+    related tags</h3>
+  <mat-chip-list>
+    <div class="scrollToBottom">
+      <div *ngFor="let tag of tagOccurrence| slice:0:changeNumberOfTagsShown(); let ind=index;"
+           class="chip">
+        <mat-chip id="{{tag.id}}" matBadge="{{tag.count}}" matBadgePosition="after"
+                  matBadgeColor="accent" matBadgeSize="large">
+          <p class="tag">{{tag.name}}</p>
+          <button mat-icon-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger"
+                  (mousedown)="menuTrigger.openMenu()" matTooltip="Add tag to query"
+                  class="grey-icon">
+            <mat-icon *ngIf="ifPreferenceExists(tag)==false">add_circle</mat-icon>
+            <mat-icon *ngIf="getPreference(tag)=='must'" class="greene-icon"
+                      matTooltip="Set preference for this tag">favorite
+            </mat-icon>
+            <mat-icon *ngIf="getPreference(tag)=='could'" class="yellow-icon"
+                      matTooltip="Set preference for this tag">thumb_up
+            </mat-icon>
+            <mat-icon *ngIf="getPreference(tag)=='not'" class="red-icon"
+                      matTooltip="Set preference for this tag">not_interested
+            </mat-icon>
+          </button>
+          <mat-menu #menu="matMenu" [overlapTrigger]="false">
+          <span (mouseleave)="menuTrigger.closeMenu()">
+            <mat-button-toggle-group matTooltip="Set preference for this tag">
+            <mat-button-toggle (change)="onPreferenceChange(Preference.MUST, tag)" value="must"
+                               class="greene-icon">
+              <mat-icon>favorite</mat-icon>
+            </mat-button-toggle>
+            <mat-button-toggle (change)="onPreferenceChange(Preference.COULD, tag)" value="could"
+                               class="yellow-icon">
+              <mat-icon>thumb_up</mat-icon>
+            </mat-button-toggle>
+            <mat-button-toggle (change)="onPreferenceChange(Preference.NOT, tag)" value="not"
+                               class="red-icon">
+              <mat-icon>not_interested</mat-icon>
+              </mat-button-toggle>
+              </mat-button-toggle-group>
+          </span>
+          </mat-menu>
+        </mat-chip>
+      </div>
+    </div>
+  </mat-chip-list>
+
+  <div>
+    <h3 class="mat-list-custom" *ngIf="captionOccurrence">Top {{numberOfCaptionTermsShown}} of
+      <b>{{captionOccurrence.length}}</b> words used in captions</h3>
+
+    <mat-slide-toggle [formControl]="toggle"
+                      [color]="color"
+                      [checked]="checked">
+      activate list with exact values
+    </mat-slide-toggle>
+
+    <!-- LIST -->
+    <div *ngIf="listTrue == true">
+      <mat-list-item
+          *ngFor="let item of captionOccurrence | slice:0:numberOfCaptionTermsShown; let ind=index;">
+        <h5 class="mat-h5" matLine>{{item.caption}} : {{item.occurrence}}</h5>
+      </mat-list-item>
+    </div>
+
+    <!-- CLOUD -->
+    <div>
+      <div #cloud class="tag-cloud"></div>
+    </div>
+  </div>
+
+  <!--
+    <h3 class="mat-list-custom" *ngIf="scores.length>0">Score distribution</h3>
+    <p *ngIf="scores.length>0">0.8 - 1.0: {{scores[0]}}</p>
+    <p *ngIf="scores.length>0">0.6 - 0.8: {{scores[1]}}</p>
+    <p *ngIf="scores.length>0">0.4 - 0.6: {{scores[2]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[3]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[4]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[5]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[6]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[7]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[8]}}</p>
+    <p *ngIf="scores.length>0">under 0.4: {{scores[9]}}</p>
+  -->
+
+  <!-- HISTOGRAM -->
+  <div *ngIf="dataScores.length!==0">
+    <google-chart #chart
+                  [title]="title"
+                  [type]="type"
+                  [data]="dataScores"
+                  [columns]="columnNames"
+                  [options]="options"
+                  [width]="width"
+                  [height]="height">
+    </google-chart>
+  </div>
+</mat-list>
+
+
+<div *ngIf="!queryService.results">
+  <p class="text-muted">No results available. Execute a query first and/or wait for incoming results.</p>
+</div>

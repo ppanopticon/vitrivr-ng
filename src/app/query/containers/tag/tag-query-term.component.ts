@@ -1,12 +1,19 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Injectable, Input, OnInit} from '@angular/core';
 import {TagQueryTerm} from '../../../shared/model/queries/tag-query-term.model';
 import {FormControl} from '@angular/forms';
 import {EMPTY, Observable} from 'rxjs';
-import {Tag} from '../../../shared/model/misc/tag.model';
+import {Preference, Tag} from '../../../shared/model/misc/tag.model';
 import {debounceTime, map, mergeAll, startWith} from 'rxjs/operators';
 import {MatAutocompleteSelectedEvent} from '@angular/material/autocomplete';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {LookupService} from '../../../core/lookup/lookup.service';
+
+import {ResultSetInfoService} from '../../../core/queries/result-set-info.service';
+
+
+@Injectable({
+  providedIn: 'root'
+})
 
 @Component({
   selector: 'qt-tag',
@@ -24,7 +31,12 @@ export class TagQueryTermComponent implements OnInit {
   /** List of tag fields currently displayed. */
   private _tags: Tag[] = [];
 
-  constructor(private _lookupService: LookupService, private _matsnackbar: MatSnackBar) {
+  /**
+   * make enum available in html https://stackoverflow.com/questions/44045311/cannot-approach-typescript-enum-within-html
+   */
+  Preference = Preference;
+
+  constructor(private _lookupService: LookupService, private _matsnackbar: MatSnackBar, private _resultSetInfoService: ResultSetInfoService) {
     this._field = new FieldGroup(_lookupService);
   }
 
@@ -32,6 +44,11 @@ export class TagQueryTermComponent implements OnInit {
     if (this.tagTerm.data) {
       this._tags = this.tagTerm.tags;
     }
+    this._resultSetInfoService.currentNewTagForQuery.subscribe(message => {
+      if (message) {
+        this.addTag(message);
+      }
+    });
   }
 
   get tags() {
@@ -55,9 +72,7 @@ export class TagQueryTermComponent implements OnInit {
       }
     }
     if (!tagAlreadyInList) {
-
-      this.addTags(this.getAllTagsWithEqualName(event.option.value));
-
+      this.addTag(event.option.value);
     } else {
       this.field.formControl.setValue('');
       this._matsnackbar.open(`Tag ${event.option.value.name} (${event.option.value.id}) already added`, null, {
@@ -72,12 +87,14 @@ export class TagQueryTermComponent implements OnInit {
    * @param {Tag} tag The tag that should be added.
    */
   public addTag(tag: Tag) {
+    tag.preference = Preference.COULD;
     this._tags.push(tag);
     this.field.formControl.setValue('');
     this.tagTerm.tags = this._tags;
     this.tagTerm.data = 'data:application/json;base64,' + btoa(JSON.stringify(this._tags.map(v => {
       return v;
     })));
+    this.sortTagsByPreference();
   }
 
   /**
@@ -86,6 +103,7 @@ export class TagQueryTermComponent implements OnInit {
    */
   public addTags(tags: Tag[]) {
     tags.forEach(tag => {
+      tag.preference = Preference.COULD;
       this.addTag(tag);
     })
   }
@@ -106,8 +124,26 @@ export class TagQueryTermComponent implements OnInit {
     })));
   }
 
-  private getAllTagsWithEqualName(tag: Tag): Tag[] {
-    return this._field.currentlyDisplayedTags.filter(t => t.name === tag.name);
+  /**
+   * Stores values for preference set for a tag in a Map<String, String>
+   */
+  public onPreferenceChange(preference: Preference, tag): void {
+    tag.preference = preference;
+    this.tagTerm.data = 'data:application/json;base64,' + btoa(JSON.stringify(this._tags.map(v => {
+      return v;
+    })));
+    this.sortTagsByPreference();
+  }
+
+  ifPreferenceExists(tag): boolean {
+    return tag.preference != null;
+  }
+
+
+  private sortTagsByPreference(): void {
+    const sort = this._tags.sort(function (a, b) {
+      return a.preference > b.preference ? 1 : a.preference < b.preference ? -1 : 0
+    })
   }
 }
 
@@ -152,4 +188,6 @@ export class FieldGroup {
   set selection(value: Tag) {
     this._selection = value;
   }
+
+
 }

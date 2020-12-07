@@ -8,7 +8,9 @@ export type ContextKey =
   | 'q:value' /* Value  submitted with a query. */
   | 'i:mediaobject' /* The item that was interacted with (mediaobject). */
   | 'i:mediasegment' /* The item that was interacted with (mediasegment). */
-  | 'i:starttime'  /* The start time of the object to be played */
+  | 'i:starttime' /* The start time of the object to be played */
+  | 'i:tagid'
+  | 'i:tagcount' /* how often the tag which was added occured */
   | 'w:weights' /* The categories and weights after a re-weighting action. */
   | 'n:component' /* The name of the UI component, the UI navigated to. */
 

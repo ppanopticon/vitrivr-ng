@@ -1,4 +1,10 @@
 export class Tag {
+  /** Optional variable for aggregate statistics: could mention how many times a tag has occured*/
+  public count: number;
+
+  /** Optional variable indicating user preference */
+  public preference: Preference;
+
   /**
    * Construtor for a Tag.
    *
@@ -8,4 +14,12 @@ export class Tag {
    */
   constructor(public readonly id: string, public readonly name: String, public readonly description: string) {
   }
+
 }
+
+export enum Preference {
+  COULD = 'could',
+  MUST = 'must',
+  NOT = 'not'
+}
+

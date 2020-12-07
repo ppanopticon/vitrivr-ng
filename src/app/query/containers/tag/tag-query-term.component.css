@@ -1,3 +1,31 @@
 .textinput {
   width: 90%;
 }
+
+.showPreferences {
+  display: none;
+}
+
+.mat-chip-item:hover .showPreferences {
+  display: block;
+}
+
+
+.container {
+  display: flex; /* or inline-flex */
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.greene-icon {
+  color: limegreen;
+}
+
+.yellow-icon {
+  color: orange;
+}
+
+.red-icon {
+  color: red;
+}

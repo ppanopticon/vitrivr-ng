@@ -10,12 +10,14 @@ import {PreferencesComponent} from './preferences/preferences.component';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {Ng5SliderModule} from 'ng5-slider';
 import {ContainerPipesModule} from '../shared/pipes/containers/container-pipes.module';
-import {MatBadgeModule} from '@angular/material/badge';
+import { InformationComponent } from './information/information.component';
 import {MatButtonToggleModule} from '@angular/material/button-toggle';
+import {MatBadgeModule} from '@angular/material/badge';
+import {GoogleChartsModule} from 'angular-google-charts';
 
 @NgModule({
-  imports: [MaterialModule, BrowserModule, FormsModule, FlexLayoutModule, Ng5SliderModule, ContainerPipesModule, MatButtonToggleModule, MatBadgeModule, ReactiveFormsModule,],
-  declarations: [RefinementComponent, SettingsComponent, SelectionManagementComponent, PreferencesComponent, WeightDistributionComponent],
+  imports: [MaterialModule, BrowserModule, FormsModule, FlexLayoutModule, Ng5SliderModule, ContainerPipesModule, MatButtonToggleModule, MatBadgeModule, ReactiveFormsModule, GoogleChartsModule],
+  declarations: [RefinementComponent, SettingsComponent, SelectionManagementComponent, PreferencesComponent, WeightDistributionComponent, InformationComponent],
   exports: [RefinementComponent, SettingsComponent, SelectionManagementComponent, PreferencesComponent]
 })
 export class SettingsModule {

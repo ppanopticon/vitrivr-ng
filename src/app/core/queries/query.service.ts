@@ -4,7 +4,6 @@ import {Observable, Subject} from 'rxjs';
 import {Message} from '../../shared/model/messages/interfaces/message.interface';
 import {QueryStart} from '../../shared/model/messages/interfaces/responses/query-start.interface';
 import {SimilarityQueryResult} from '../../shared/model/messages/interfaces/responses/query-result-similarty.interface';
-import {SimilarityQuery} from '../../shared/model/messages/queries/similarity-query.model';
 import {MoreLikeThisQuery} from '../../shared/model/messages/queries/more-like-this-query.model';
 import {QueryError} from '../../shared/model/messages/interfaces/responses/query-error.interface';
 import {ResultsContainer} from '../../shared/model/results/scores/results-container.model';
@@ -26,11 +25,18 @@ import {SegmentScoreContainer} from '../../shared/model/results/scores/segment-s
 import {TemporalFusionFunction} from '../../shared/model/results/fusion/temporal-fusion-function.model';
 import {StagedSimilarityQuery} from '../../shared/model/messages/queries/staged-similarity-query.model';
 import {TemporalQuery} from '../../shared/model/messages/queries/temporal-query.model';
+import {QueryResultTopTags} from '../../shared/model/messages/interfaces/responses/query-result-top-tags';
+import {ResultSetInfoService} from './result-set-info.service';
+import {QueryResultTopCaptions} from '../../shared/model/messages/interfaces/responses/query-result-top-captions';
+import {CaptionWithCount} from '../../shared/model/misc/caption-with-count.model';
+import {Tag} from '../../shared/model/misc/tag.model';
+import {LookupService} from '../lookup/lookup.service';
 import {ContextKey, InteractionEventComponent} from '../../shared/model/events/interaction-event-component.model';
 import {InteractionEventType} from '../../shared/model/events/interaction-event-type.model';
-import {BoolQueryTerm} from '../../shared/model/queries/bool-query-term.model';
 import {TextQueryTerm} from '../../shared/model/queries/text-query-term.model';
+import {BoolQueryTerm} from '../../shared/model/queries/bool-query-term.model';
 import {TagQueryTerm} from '../../shared/model/queries/tag-query-term.model';
+
 import {InteractionEvent} from '../../shared/model/events/interaction-event.model';
 import {EventBusService} from '../basics/event-bus.service';
 import {MediaSegmentQueryResult} from '../../shared/model/messages/interfaces/responses/query-result-segment.interface';
@@ -66,14 +72,23 @@ export class QueryService {
   /** Flag indicating whether a query is currently being executed. */
   private _running = 0;
 
+  tagOccurrenceArray: Tag[];
+  captionsOccurrenceMap: Map<string, number>;
+
+  topTags: string;
+
+
   constructor(@Inject(HistoryService) private _history,
               @Inject(WebSocketFactoryService) _factory: WebSocketFactoryService,
               @Inject(ConfigService) private _config: ConfigService,
-              private _eventBusService: EventBusService) {
+              @Inject(ResultSetInfoService) private resultSetInfoService,
+              @Inject(LookupService) private _lookupService,
+              @Inject(EventBusService) private _eventBusService,
+  ) {
     _factory.asObservable().pipe(filter(ws => ws != null)).subscribe(ws => {
       this._socket = ws;
       this._socket.pipe(
-        filter(msg => ['QR_START', 'QR_END', 'QR_ERROR', 'QR_SIMILARITY', 'QR_OBJECT', 'QR_SEGMENT', 'QR_METADATA_S', 'QR_METADATA_O'].indexOf(msg.messageType) > -1)
+        filter(msg => ['QR_START', 'QR_END', 'QR_ERROR', 'QR_SIMILARITY', 'QR_OBJECT', 'QR_SEGMENT', 'QR_METADATA_S', 'QR_METADATA_O', 'QR_TOPTAGS', 'QR_TOPCAPTIONS'].indexOf(msg.messageType) > -1)
       ).subscribe((msg: Message) => this.onApiMessage(msg));
     });
     this._config.subscribe(config => {
@@ -81,7 +96,8 @@ export class QueryService {
       if (this._results) {
         this._results.setScoreFunction(this._scoreFunction);
       }
-    })
+    });
+    this.resultSetInfoService.topTagsSource.subscribe(message => this.topTags = message);
   }
 
   /**
@@ -379,8 +395,25 @@ export class QueryService {
         console.timeEnd(`Query (${(<QueryError>message).queryId})`);
         this.finalizeQuery((<QueryError>message).queryId);
         break;
+      case 'QR_TOPTAGS':
+        const topTags = <QueryResultTopTags>message;
+        this.tagOccurrenceArray = topTags.tags;
+        this.resultSetInfoService.changeMessage(this.tagOccurrenceArray);
+        break;
+      case 'QR_TOPCAPTIONS':
+        const topCaptions = <QueryResultTopCaptions>message;
+        this.captionsOccurrenceMap = topCaptions.captions;
+        const captionOccurrences = new Array<CaptionWithCount>(Object.keys(this.captionsOccurrenceMap).length);
+        Object.keys(this.captionsOccurrenceMap).forEach((value: string, index: number) => {
+            captionOccurrences[index] = new CaptionWithCount(value, this.captionsOccurrenceMap[value]);
+          }
+        );
+        this.resultSetInfoService.changeCaption(captionOccurrences);
+
+        break;
     }
   }
+
 
   /**
    * Updates the local state in response to a QR_START message. This method triggers an observable change in the QueryService class.
